@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "google-reader": {
+      "command": "mcp-google-reader",
+      "args": ["serve"]
+    }
+  }
+}
