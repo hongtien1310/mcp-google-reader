@@ -1,4 +1,3 @@
-import { z } from "zod";
 import { extractGoogleUrls } from "../utils/urlParser.js";
 import { getAuthenticatedClient } from "../auth/oauth.js";
 import { readGoogleSheet, type SheetResult } from "../readers/sheetsReader.js";
@@ -14,25 +13,6 @@ export interface SheetErrorResponse {
 }
 
 const cache = new ContentCache<SheetResponse>(60);
-
-export const readGoogleSheetSchema = z.object({
-  url: z
-    .string()
-    .describe("Google Sheets URL"),
-  sheet_name: z
-    .string()
-    .optional()
-    .describe("Specific sheet/tab name to read. If omitted, reads the first sheet."),
-  range: z
-    .string()
-    .optional()
-    .describe("Specific cell range to read, e.g. 'A1:Z100'. If omitted, reads all data."),
-  all_sheets: z
-    .boolean()
-    .optional()
-    .default(false)
-    .describe("If true, reads all sheets/tabs in the spreadsheet."),
-});
 
 export async function handleReadGoogleSheet(params: {
   url: string;

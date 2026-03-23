@@ -42,21 +42,10 @@ Paste a Google Docs/Sheets link in your message — Claude reads it directly. No
 5. Click **Create**
 6. Copy the **Client ID** and **Client Secret**
 
-### 4. Install
+### 4. Authorize
 
 ```bash
-# From source
-git clone <repo-url>
-cd mcp-google-reader
-npm install
-npm run build
-npm link
-```
-
-### 5. Authorize
-
-```bash
-mcp-google-reader auth
+npx mcp-google-reader auth
 ```
 
 This will:
@@ -65,17 +54,19 @@ This will:
 - After Google consent, browser redirects to localhost and tokens are saved
 - Credentials stored at `~/.mcp-google-reader/credentials.json`
 
-### 6. Add to Claude Code
+### 5. Add to Claude Code
 
 ```bash
 # Add globally (available in all projects)
-claude mcp add -s user google-reader -- mcp-google-reader serve
+claude mcp add -s user google-reader -- npx mcp-google-reader serve
 
 # Or add to current project only
-claude mcp add google-reader -- mcp-google-reader serve
+claude mcp add google-reader -- npx mcp-google-reader serve
 ```
 
 Then **restart Claude Code** to load the MCP server.
+
+> No `npm install -g` needed — `npx` downloads and runs automatically.
 
 ## Usage
 

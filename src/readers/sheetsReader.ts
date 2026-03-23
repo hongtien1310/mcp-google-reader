@@ -47,7 +47,7 @@ export async function readGoogleSheet(
 
   // Fetch data for all requested sheets in one batch
   const ranges = sheetsToRead.map((name) =>
-    name.includes("!") ? name : `'${name}'`
+    name.includes("!") ? name : `'${name.replace(/'/g, "''")}'`
   );
 
   const batchRes = await sheetsApi.spreadsheets.values.batchGet({

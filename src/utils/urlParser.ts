@@ -15,6 +15,9 @@ export function extractGoogleUrls(message: string): ParsedGoogleUrl[] {
   const results: ParsedGoogleUrl[] = [];
   const seen = new Set<string>();
 
+  // Reset lastIndex to avoid stale state from previous calls
+  GOOGLE_URL_REGEX.lastIndex = 0;
+
   let match: RegExpExecArray | null;
   while ((match = GOOGLE_URL_REGEX.exec(message)) !== null) {
     const docType = match[1] === "document" ? "document" : "spreadsheet";

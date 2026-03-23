@@ -39,8 +39,7 @@ async function handleAuth() {
     console.log("To get OAuth credentials:");
     console.log("1. Go to https://console.cloud.google.com/apis/credentials");
     console.log("2. Create an OAuth 2.0 Client ID (Desktop app)");
-    console.log("3. Enable Google Docs API and Google Sheets API");
-    console.log(`4. Add http://localhost:3456/callback to redirect URIs\n`);
+    console.log("3. Enable Google Docs API and Google Sheets API\n");
 
     const rl = readline.createInterface({
       input: process.stdin,
@@ -86,16 +85,8 @@ COMMANDS:
   help      Show this help message
 
 SETUP:
-  1. mcp-google-reader auth    # One-time setup
-  2. Add to .mcp.json:
-     {
-       "mcpServers": {
-         "google-reader": {
-           "command": "mcp-google-reader",
-           "args": ["serve"]
-         }
-       }
-     }
+  1. npx mcp-google-reader auth
+  2. claude mcp add -s user google-reader -- npx mcp-google-reader serve
 `);
 }
 

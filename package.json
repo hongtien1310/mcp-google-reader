@@ -2,6 +2,12 @@
   "name": "mcp-google-reader",
   "version": "1.0.0",
   "description": "MCP server to read Google Docs and Google Sheets content for AI assistants",
+  "author": "hongtien1310",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/hongtien1310/mcp-google-reader.git"
+  },
+  "homepage": "https://github.com/hongtien1310/mcp-google-reader#readme",
   "main": "dist/index.js",
   "bin": {
     "mcp-google-reader": "./dist/cli.js"
@@ -10,12 +16,16 @@
     "build": "tsc",
     "dev": "tsc --watch",
     "start": "node dist/cli.js serve",
-    "auth": "node dist/cli.js auth"
+    "auth": "node dist/cli.js auth",
+    "prepublishOnly": "npm run build"
   },
   "keywords": [
     "mcp",
+    "mcp-server",
+    "model-context-protocol",
     "google-docs",
     "google-sheets",
+    "google-api",
     "claude",
     "ai"
   ],
@@ -23,7 +33,6 @@
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.12.1",
     "googleapis": "^144.0.0",
-    "open": "^10.1.0",
     "zod": "^4.3.6"
   },
   "devDependencies": {

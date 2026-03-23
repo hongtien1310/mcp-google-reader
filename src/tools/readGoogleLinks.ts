@@ -1,4 +1,3 @@
-import { z } from "zod";
 import { extractGoogleUrls } from "../utils/urlParser.js";
 import { getAuthenticatedClient } from "../auth/oauth.js";
 import { readGoogleDoc } from "../readers/docsReader.js";
@@ -6,14 +5,6 @@ import { readGoogleSheet, type SheetResult } from "../readers/sheetsReader.js";
 import { ContentCache } from "../cache/contentCache.js";
 
 const cache = new ContentCache<DocumentResult | SpreadsheetResult>(60);
-
-export const readGoogleLinksSchema = z.object({
-  message: z
-    .string()
-    .describe(
-      "A message containing one or more Google Docs/Sheets URLs. URLs will be automatically extracted and their content fetched."
-    ),
-});
 
 interface DocumentResult {
   url: string;

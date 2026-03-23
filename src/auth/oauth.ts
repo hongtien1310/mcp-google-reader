@@ -1,6 +1,5 @@
 import { google } from "googleapis";
 import * as http from "http";
-import * as url from "url";
 import {
   saveTokens,
   loadTokens,
@@ -100,18 +99,17 @@ export async function runAuthFlow(config: OAuthConfig): Promise<void> {
 function waitForAuthCode(): Promise<string> {
   return new Promise((resolve, reject) => {
     const server = http.createServer((req, res) => {
-      const parsedUrl = url.parse(req.url ?? "", true);
-
-      // Desktop app: Google redirects to root path with query params
-      const code = parsedUrl.query.code as string | undefined;
-      const error = parsedUrl.query.error as string | undefined;
+      const parsedUrl = new URL(req.url ?? "", `http://localhost:${REDIRECT_PORT}`);
+      const code = parsedUrl.searchParams.get("code") ?? undefined;
+      const error = parsedUrl.searchParams.get("error") ?? undefined;
 
       if (code || error) {
 
         if (error) {
-          res.writeHead(400, { "Content-Type": "text/html" });
+          const safeError = error.replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]!));
+          res.writeHead(400, { "Content-Type": "text/html; charset=utf-8" });
           res.end(
-            `<h1>Authorization Failed</h1><p>${error}</p><p>You can close this tab.</p>`
+            `<h1>Authorization Failed</h1><p>${safeError}</p><p>You can close this tab.</p>`
           );
           server.close();
           reject(new Error(`Authorization failed: ${error}`));
