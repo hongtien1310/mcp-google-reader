@@ -1,6 +1,6 @@
 {
   "name": "mcp-google-reader",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "MCP server to read Google Docs and Google Sheets content for AI assistants",
   "author": "hongtien1310",
   "repository": {
