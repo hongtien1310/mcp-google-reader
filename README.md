@@ -4,6 +4,21 @@ MCP server that reads Google Docs and Google Sheets content for AI assistants li
 
 Paste a Google Docs/Sheets link in your message — Claude reads it directly. No more copy-pasting PRDs, tech specs, or test case spreadsheets.
 
+## Prerequisites
+
+- **Node.js 18+** (recommended: [Node.js 20 or 22 LTS](https://nodejs.org/))
+- A Google Cloud project with Docs & Sheets APIs enabled
+
+## Quick Start
+
+```bash
+# 1. Set up Google Cloud OAuth (see detailed steps below)
+# 2. Authorize (run in your terminal, not inside an AI assistant)
+npx mcp-google-reader auth
+# 3. Add to your MCP client
+claude mcp add -s user google-reader -- npx mcp-google-reader serve
+```
+
 ## Features
 
 - **Google Docs → Markdown**: Preserves headings, bold, italic, lists, tables, links
@@ -29,9 +44,10 @@ Paste a Google Docs/Sheets link in your message — Claude reads it directly. No
    - App name: `mcp-google-reader`
    - User support email: your email
    - Developer contact: your email
-4. Save and Continue through all steps
-5. Go to **Test users** → **Add users** → add your Google email
-6. Keep in **Testing** mode (sufficient for small teams)
+4. **Scopes** → Save and Continue (no changes needed)
+5. **Test users** → **Add users** → add your Google email → Save and Continue
+6. **Summary** → Back to Dashboard
+7. Keep in **Testing** mode (sufficient for personal use and small teams)
 
 ### 3. Create OAuth Client ID
 
@@ -44,15 +60,19 @@ Paste a Google Docs/Sheets link in your message — Claude reads it directly. No
 
 ### 4. Authorize
 
+> **Important**: Run this command in your **terminal** directly — not inside an AI assistant. The auth flow requires interactive input and opening a browser.
+
 ```bash
 npx mcp-google-reader auth
 ```
 
 This will:
-- Ask for your Client ID and Client Secret (first time only, saved to `~/.mcp-google-reader/oauth-config.json`)
-- Print an authorization URL — **copy and open it in your browser**
-- After Google consent, browser redirects to localhost and tokens are saved
-- Credentials stored at `~/.mcp-google-reader/credentials.json`
+1. Ask for your Client ID and Client Secret (first time only)
+2. Print an authorization URL — **copy and open it in your browser**
+3. Sign in with your Google account and click **Allow**
+4. Browser redirects to localhost — tokens are saved automatically
+
+Credentials stored at `~/.mcp-google-reader/`
 
 > `npx` automatically downloads the package on first run — no `npm install -g` needed.
 >
@@ -66,7 +86,9 @@ This will:
 > mcp-google-reader auth
 > ```
 
-### 5. Add to Claude Code
+### 5. Add to your MCP client
+
+#### Claude Code (CLI)
 
 ```bash
 # Add globally (available in all projects)
@@ -78,9 +100,43 @@ claude mcp add google-reader -- npx mcp-google-reader serve
 
 Then **restart Claude Code** to load the MCP server.
 
-## Usage
+#### Cursor / Windsurf / VS Code
 
-### In Claude Code
+Create a `.mcp.json` file in your project root (or copy from `.mcp-example.json`):
+
+```json
+{
+  "mcpServers": {
+    "google-reader": {
+      "command": "npx",
+      "args": ["mcp-google-reader", "serve"]
+    }
+  }
+}
+```
+
+Then restart your editor.
+
+#### Claude Desktop
+
+Add to your Claude Desktop config (`claude_desktop_config.json`):
+
+```json
+{
+  "mcpServers": {
+    "google-reader": {
+      "command": "npx",
+      "args": ["mcp-google-reader", "serve"]
+    }
+  }
+}
+```
+
+Config file location:
+- macOS: `~/Library/Application Support/Claude/claude_desktop_config.json`
+- Windows: `%APPDATA%\Claude\claude_desktop_config.json`
+
+## Usage
 
 Just paste Google links in your message:
 
