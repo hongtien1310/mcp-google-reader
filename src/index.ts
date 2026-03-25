@@ -8,6 +8,7 @@ import {
   handleReadGoogleSheet,
   type SheetErrorResponse,
 } from "./tools/readGoogleSheet.js";
+import { sanitizeErrorMessage } from "./utils/sanitize.js";
 
 export function createServer(): McpServer {
   const server = new McpServer({
@@ -41,7 +42,7 @@ export function createServer(): McpServer {
           ],
         };
       } catch (err) {
-        const msg = err instanceof Error ? err.message : "Unknown error";
+        const msg = sanitizeErrorMessage(err);
         return {
           content: [{ type: "text" as const, text: `Error: ${msg}` }],
           isError: true,
@@ -104,7 +105,7 @@ export function createServer(): McpServer {
           ],
         };
       } catch (err) {
-        const msg = err instanceof Error ? err.message : "Unknown error";
+        const msg = sanitizeErrorMessage(err);
         return {
           content: [{ type: "text" as const, text: `Error: ${msg}` }],
           isError: true,

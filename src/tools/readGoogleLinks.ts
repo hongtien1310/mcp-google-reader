@@ -3,8 +3,35 @@ import { getAuthenticatedClient } from "../auth/oauth.js";
 import { readGoogleDoc } from "../readers/docsReader.js";
 import { readGoogleSheet, type SheetResult } from "../readers/sheetsReader.js";
 import { ContentCache } from "../cache/contentCache.js";
+import { sanitizeErrorMessage } from "../utils/sanitize.js";
 
 const cache = new ContentCache<DocumentResult | SpreadsheetResult>(60);
+
+const MAX_URLS = 20;
+const MAX_CONCURRENT = 5;
+
+async function mapWithConcurrency<T, R>(
+  items: T[],
+  concurrency: number,
+  fn: (item: T) => Promise<R>
+): Promise<R[]> {
+  const results: R[] = [];
+  let index = 0;
+
+  async function worker() {
+    while (index < items.length) {
+      const i = index++;
+      results[i] = await fn(items[i]);
+    }
+  }
+
+  const workers = Array.from(
+    { length: Math.min(concurrency, items.length) },
+    () => worker()
+  );
+  await Promise.all(workers);
+  return results;
+}
 
 interface DocumentResult {
   url: string;
@@ -32,6 +59,10 @@ export async function handleReadGoogleLinks(
 ): Promise<ReadGoogleLinksResponse> {
   const urls = extractGoogleUrls(message);
 
+  if (urls.length > MAX_URLS) {
+    urls.length = MAX_URLS;
+  }
+
   if (urls.length === 0) {
     return {
       results: [],
@@ -49,8 +80,8 @@ export async function handleReadGoogleLinks(
   const results: ReadResult[] = [];
   const errors: Array<{ url: string; error: string }> = [];
 
-  // Fetch all URLs in parallel
-  const promises = urls.map(async (parsed) => {
+  // Fetch URLs with concurrency limit
+  const settled = await mapWithConcurrency(urls, MAX_CONCURRENT, async (parsed) => {
     // Check cache first
     const cacheKey = parsed.documentId;
     const cached = cache.get(cacheKey);
@@ -82,16 +113,13 @@ export async function handleReadGoogleLinks(
       cache.set(cacheKey, result);
       return { result, error: null };
     } catch (err) {
-      const errorMessage =
-        err instanceof Error ? err.message : "Unknown error";
+      const errorMessage = sanitizeErrorMessage(err);
       return {
         result: null,
         error: { url: parsed.url, error: errorMessage },
       };
     }
   });
-
-  const settled = await Promise.all(promises);
 
   for (const item of settled) {
     if (item.result) {

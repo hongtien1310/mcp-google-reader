@@ -1,5 +1,6 @@
 import { google } from "googleapis";
 import * as http from "http";
+import * as crypto from "crypto";
 import {
   saveTokens,
   loadTokens,
@@ -72,17 +73,20 @@ export async function getAuthenticatedClient() {
 export async function runAuthFlow(config: OAuthConfig): Promise<void> {
   const client = createOAuth2Client(config);
 
+  const state = crypto.randomBytes(32).toString("hex");
+
   const authUrl = client.generateAuthUrl({
     access_type: "offline",
     scope: SCOPES,
     prompt: "consent",
+    state,
   });
 
   console.log("\n🔐 Open this URL in your browser to authorize:\n");
   console.log(authUrl);
   console.log();
 
-  const code = await waitForAuthCode();
+  const code = await waitForAuthCode(state);
 
   const { tokens } = await client.getToken(code);
 
@@ -96,14 +100,31 @@ export async function runAuthFlow(config: OAuthConfig): Promise<void> {
   console.log("✅ Authorization successful! Credentials saved.\n");
 }
 
-function waitForAuthCode(): Promise<string> {
+function waitForAuthCode(expectedState: string): Promise<string> {
   return new Promise((resolve, reject) => {
     const server = http.createServer((req, res) => {
       const parsedUrl = new URL(req.url ?? "", `http://localhost:${REDIRECT_PORT}`);
+
+      // Only accept requests on the root path
+      if (parsedUrl.pathname !== "/") {
+        res.writeHead(404);
+        res.end();
+        return;
+      }
+
       const code = parsedUrl.searchParams.get("code") ?? undefined;
       const error = parsedUrl.searchParams.get("error") ?? undefined;
+      const state = parsedUrl.searchParams.get("state") ?? undefined;
 
       if (code || error) {
+        // Validate CSRF state parameter
+        if (state !== expectedState) {
+          res.writeHead(400, { "Content-Type": "text/html; charset=utf-8" });
+          res.end("<h1>Authorization Failed</h1><p>Invalid state parameter.</p><p>You can close this tab.</p>");
+          server.close();
+          reject(new Error("Authorization failed: invalid state parameter (possible CSRF attack)."));
+          return;
+        }
 
         if (error) {
           const safeError = error.replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]!));
@@ -131,9 +152,10 @@ function waitForAuthCode(): Promise<string> {
       res.end();
     });
 
-    server.listen(REDIRECT_PORT, () => {
+    // Bind to localhost only, not all interfaces
+    server.listen(REDIRECT_PORT, "127.0.0.1", () => {
       console.log(
-        `Waiting for authorization on http://localhost:${REDIRECT_PORT}...`
+        `Waiting for authorization on http://127.0.0.1:${REDIRECT_PORT}...`
       );
     });
 

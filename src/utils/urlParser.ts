@@ -9,17 +9,17 @@ export interface ParsedGoogleUrl {
 }
 
 const GOOGLE_URL_REGEX =
-  /https?:\/\/docs\.google\.com\/(document|spreadsheets)\/d\/([a-zA-Z0-9_-]+)(?:\/[^\s)}\]"'<>]*)*/gi;
+  /https:\/\/docs\.google\.com\/(document|spreadsheets)\/d\/([a-zA-Z0-9_-]{1,128})(?:\/[^\s)}\]"'<>]*)?\/?/gi;
 
 export function extractGoogleUrls(message: string): ParsedGoogleUrl[] {
   const results: ParsedGoogleUrl[] = [];
   const seen = new Set<string>();
 
-  // Reset lastIndex to avoid stale state from previous calls
-  GOOGLE_URL_REGEX.lastIndex = 0;
+  // Create new regex each call to avoid shared lastIndex state
+  const regex = new RegExp(GOOGLE_URL_REGEX.source, GOOGLE_URL_REGEX.flags);
 
   let match: RegExpExecArray | null;
-  while ((match = GOOGLE_URL_REGEX.exec(message)) !== null) {
+  while ((match = regex.exec(message)) !== null) {
     const docType = match[1] === "document" ? "document" : "spreadsheet";
     const documentId = match[2];
 

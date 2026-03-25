@@ -54,6 +54,18 @@ This will:
 - After Google consent, browser redirects to localhost and tokens are saved
 - Credentials stored at `~/.mcp-google-reader/credentials.json`
 
+> `npx` automatically downloads the package on first run — no `npm install -g` needed.
+>
+> **Windows troubleshooting**: If you get `sed: command not found` errors, try one of these:
+> ```bash
+> # Option 1: Run in Command Prompt (cmd) instead of PowerShell
+> cmd /c "npx mcp-google-reader auth"
+>
+> # Option 2: Install globally first
+> npm install -g mcp-google-reader
+> mcp-google-reader auth
+> ```
+
 ### 5. Add to Claude Code
 
 ```bash
@@ -65,8 +77,6 @@ claude mcp add google-reader -- npx mcp-google-reader serve
 ```
 
 Then **restart Claude Code** to load the MCP server.
-
-> No `npm install -g` needed — `npx` downloads and runs automatically.
 
 ## Usage
 

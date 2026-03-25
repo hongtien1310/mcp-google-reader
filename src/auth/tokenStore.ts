@@ -1,22 +1,26 @@
 import * as fs from "fs";
 import * as path from "path";
 import * as os from "os";
+import { z } from "zod";
 
 const CONFIG_DIR = path.join(os.homedir(), ".mcp-google-reader");
 const CREDENTIALS_FILE = path.join(CONFIG_DIR, "credentials.json");
 const OAUTH_CONFIG_FILE = path.join(CONFIG_DIR, "oauth-config.json");
 
-export interface StoredTokens {
-  access_token: string;
-  refresh_token: string;
-  token_type: string;
-  expiry_date: number;
-}
+const StoredTokensSchema = z.object({
+  access_token: z.string(),
+  refresh_token: z.string(),
+  token_type: z.string(),
+  expiry_date: z.number(),
+});
 
-export interface OAuthConfig {
-  client_id: string;
-  client_secret: string;
-}
+const OAuthConfigSchema = z.object({
+  client_id: z.string(),
+  client_secret: z.string(),
+});
+
+export type StoredTokens = z.infer<typeof StoredTokensSchema>;
+export type OAuthConfig = z.infer<typeof OAuthConfigSchema>;
 
 function ensureConfigDir(): void {
   if (!fs.existsSync(CONFIG_DIR)) {
@@ -35,8 +39,11 @@ export function loadTokens(): StoredTokens | null {
   try {
     if (!fs.existsSync(CREDENTIALS_FILE)) return null;
     const data = fs.readFileSync(CREDENTIALS_FILE, "utf-8");
-    return JSON.parse(data) as StoredTokens;
-  } catch {
+    return StoredTokensSchema.parse(JSON.parse(data));
+  } catch (err) {
+    if (fs.existsSync(CREDENTIALS_FILE)) {
+      console.error("Warning: credentials.json exists but contains invalid data. Re-run `mcp-google-reader auth`.");
+    }
     return null;
   }
 }
@@ -52,8 +59,11 @@ export function loadOAuthConfig(): OAuthConfig | null {
   try {
     if (!fs.existsSync(OAUTH_CONFIG_FILE)) return null;
     const data = fs.readFileSync(OAUTH_CONFIG_FILE, "utf-8");
-    return JSON.parse(data) as OAuthConfig;
-  } catch {
+    return OAuthConfigSchema.parse(JSON.parse(data));
+  } catch (err) {
+    if (fs.existsSync(OAUTH_CONFIG_FILE)) {
+      console.error("Warning: oauth-config.json exists but contains invalid data. Re-run `mcp-google-reader auth`.");
+    }
     return null;
   }
 }

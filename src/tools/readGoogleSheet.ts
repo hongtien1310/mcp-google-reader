@@ -2,6 +2,7 @@ import { extractGoogleUrls } from "../utils/urlParser.js";
 import { getAuthenticatedClient } from "../auth/oauth.js";
 import { readGoogleSheet, type SheetResult } from "../readers/sheetsReader.js";
 import { ContentCache } from "../cache/contentCache.js";
+import { sanitizeErrorMessage } from "../utils/sanitize.js";
 
 export interface SheetResponse {
   title: string;
@@ -54,7 +55,6 @@ export async function handleReadGoogleSheet(params: {
     cache.set(cacheKey, result);
     return result;
   } catch (err) {
-    const errorMessage = err instanceof Error ? err.message : "Unknown error";
-    return { error: errorMessage };
+    return { error: sanitizeErrorMessage(err) };
   }
 }
