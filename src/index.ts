@@ -123,6 +123,7 @@ function formatLinksResponse(response: {
     type: string;
     title: string;
     content?: string;
+    tabs?: Array<{ tabId: string; title: string; content: string }>;
     sheets?: Array<{ name: string; content: string; rowCount: number; columnCount: number }>;
   }>;
   errors: Array<{ url: string; error: string }>;
@@ -134,8 +135,18 @@ function formatLinksResponse(response: {
     parts.push(`> Source: ${result.url}`);
     parts.push(`> Type: ${result.type}\n`);
 
-    if (result.type === "document" && result.content) {
-      parts.push(result.content);
+    if (result.type === "document") {
+      if (result.tabs && result.tabs.length > 1) {
+        // Multi-tab document: show each tab separately
+        parts.push(`> Tabs: ${result.tabs.length}\n`);
+        for (const tab of result.tabs) {
+          parts.push(`### Tab: ${tab.title}\n`);
+          parts.push(tab.content);
+          parts.push("");
+        }
+      } else if (result.content) {
+        parts.push(result.content);
+      }
     } else if (result.type === "spreadsheet" && result.sheets) {
       for (const sheet of result.sheets) {
         if (result.sheets.length > 1) {

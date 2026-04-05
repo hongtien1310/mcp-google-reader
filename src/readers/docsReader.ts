@@ -1,21 +1,99 @@
 import { google, type docs_v1 } from "googleapis";
 import type { OAuth2Client } from "google-auth-library";
 
+export interface DocTab {
+  tabId: string;
+  title: string;
+  content: string;
+}
+
+export interface DocResult {
+  title: string;
+  content: string;
+  tabs: DocTab[];
+}
+
 /**
  * Read a Google Doc and convert to Markdown.
+ * Supports multi-tab documents by using includeTabsContent.
  */
 export async function readGoogleDoc(
   auth: OAuth2Client,
   documentId: string
-): Promise<{ title: string; content: string }> {
+): Promise<DocResult> {
   const docs = google.docs({ version: "v1", auth });
-  const res = await docs.documents.get({ documentId });
+  const res = await docs.documents.get({
+    documentId,
+    includeTabsContent: true,
+  });
   const doc = res.data;
 
   const title = doc.title ?? "Untitled";
-  const content = documentToMarkdown(doc);
+  const tabs = extractTabs(doc);
 
-  return { title, content };
+  // For backward compatibility, content is all tabs concatenated
+  const content =
+    tabs.length === 1
+      ? tabs[0].content
+      : tabs
+          .map((tab) => `## Tab: ${tab.title}\n\n${tab.content}`)
+          .join("\n\n---\n\n");
+
+  return { title, content, tabs };
+}
+
+/**
+ * Recursively extract all tabs (including child tabs) from a document.
+ */
+function extractTabs(doc: docs_v1.Schema$Document): DocTab[] {
+  const tabs: DocTab[] = [];
+
+  function processTab(tab: docs_v1.Schema$Tab): void {
+    const tabProperties = tab.tabProperties;
+    const documentTab = tab.documentTab;
+
+    if (documentTab?.body) {
+      const tabTitle = tabProperties?.title ?? "Untitled Tab";
+      const tabId = tabProperties?.tabId ?? "";
+      const content = bodyToMarkdown(documentTab.body);
+      tabs.push({ tabId, title: tabTitle, content });
+    }
+
+    // Process child tabs recursively
+    if (tab.childTabs) {
+      for (const child of tab.childTabs) {
+        processTab(child);
+      }
+    }
+  }
+
+  if (doc.tabs && doc.tabs.length > 0) {
+    for (const tab of doc.tabs) {
+      processTab(tab);
+    }
+  } else {
+    // Fallback for documents without tabs structure (shouldn't happen with includeTabsContent)
+    const content = documentToMarkdown(doc);
+    tabs.push({ tabId: "", title: "Default", content });
+  }
+
+  return tabs;
+}
+
+function bodyToMarkdown(body: docs_v1.Schema$Body): string {
+  if (!body?.content) return "";
+
+  const parts: string[] = [];
+
+  for (const element of body.content) {
+    if (element.paragraph) {
+      parts.push(parseParagraph(element.paragraph));
+    } else if (element.table) {
+      parts.push(parseTable(element.table));
+    }
+  }
+
+  return parts.join("\n").replace(/\n{3,}/g, "\n\n").trim();
 }
 
 function documentToMarkdown(doc: docs_v1.Schema$Document): string {

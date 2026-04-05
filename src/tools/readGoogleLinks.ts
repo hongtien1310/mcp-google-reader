@@ -1,6 +1,6 @@
 import { extractGoogleUrls } from "../utils/urlParser.js";
 import { getAuthenticatedClient } from "../auth/oauth.js";
-import { readGoogleDoc } from "../readers/docsReader.js";
+import { readGoogleDoc, type DocTab } from "../readers/docsReader.js";
 import { readGoogleSheet, type SheetResult } from "../readers/sheetsReader.js";
 import { ContentCache } from "../cache/contentCache.js";
 import { sanitizeErrorMessage } from "../utils/sanitize.js";
@@ -38,6 +38,7 @@ interface DocumentResult {
   type: "document";
   title: string;
   content: string;
+  tabs?: DocTab[];
 }
 
 interface SpreadsheetResult {
@@ -99,6 +100,7 @@ export async function handleReadGoogleLinks(
           type: "document",
           title: doc.title,
           content: doc.content,
+          tabs: doc.tabs,
         };
       } else {
         const sheet = await readGoogleSheet(auth, parsed.documentId);
